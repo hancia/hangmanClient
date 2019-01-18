@@ -32,7 +32,9 @@ public class connectionHandler {
             bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             hangmanWindow window = new hangmanWindow(this);
         }
-        catch (Exception e) {}
+        catch (Exception e) {
+            System.out.println("Server down");
+        }
     }
 
     private Socket openSocket(String server, int port) throws Exception

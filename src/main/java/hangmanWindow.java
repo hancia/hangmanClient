@@ -18,6 +18,8 @@ public class hangmanWindow extends JFrame implements ActionListener, WindowListe
     private connectionHandler parent;
     private JLabel wordStateLabel;
     private JTextArea wordStateArea;
+    private JLabel idLabel;
+    private JTextArea idArea;
     private boolean run;
     public hangmanWindow(connectionHandler parent){
         super("Hangman");
@@ -44,6 +46,14 @@ public class hangmanWindow extends JFrame implements ActionListener, WindowListe
         c.weightx=1;
         c.weighty=1;
         c.fill=GridBagConstraints.NONE;
+        idLabel = new JLabel("Your game id: ");
+        add(idLabel,c);
+        c.gridy++;
+        idArea = new JTextArea(3,20);
+        idArea.setEditable(false);
+        add(new JScrollPane(idArea),c);
+
+        c.gridy++;
         scoresLabel = new JLabel("Scores: ");
         add(scoresLabel,c);
         commands = new JLabel("Commands: ");
@@ -169,9 +179,15 @@ public class hangmanWindow extends JFrame implements ActionListener, WindowListe
             case "Word":
                 printWord(window[1]);
                 break;
+            case "Id":
+                printId(window[1]);
+                break;
         }
     }
 
+    private void printId(String txt){
+        idArea.setText(txt);
+    }
     private void cleanAreas(){
         hangmanArea.setText("");
         scoresArea.setText("");
