@@ -213,7 +213,6 @@ public class hangmanWindow extends JFrame implements ActionListener, WindowListe
                     if(userInput.getText().length()==1) {
                         String txt = userInput.getText().toLowerCase();
                         int checkInput = (int) txt.charAt(0);
-                        System.out.println(checkInput);
                         if ((checkInput <= 122 && checkInput >= 97) || checkInput == 48) {
                             try {
                                 hangmanWindow.this.parent.getBufferedWriter().write(userInput.getText());
