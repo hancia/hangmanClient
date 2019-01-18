@@ -107,8 +107,6 @@ public class hangmanWindow extends JFrame implements ActionListener, WindowListe
                         catch (NullPointerException a){
                             cleanAreas();
                             serverMsgArea.setText("SERVER DOWN");
-//                            System.out.println("Server down");
-//                            dispose();
                             return;
                         }
                     } catch (IOException e) {
@@ -147,7 +145,6 @@ public class hangmanWindow extends JFrame implements ActionListener, WindowListe
                     }
                 }
                 else txt.append(text);
-                //txt.append(text);
             }
         }
         messages.add(txt.toString());
@@ -206,13 +203,29 @@ public class hangmanWindow extends JFrame implements ActionListener, WindowListe
         Object source = e.getSource();
         if(source==sendButton){
             if(!userInput.getText().equals("")) {
-                try {
-                    hangmanWindow.this.parent.getBufferedWriter().write(userInput.getText());
-                    hangmanWindow.this.parent.getBufferedWriter().flush();
-                } catch (IOException e1) {
-                    System.out.println("Server error");
+                if(userInput.getText().equals("1")){
+                    try {
+                        hangmanWindow.this.parent.getSocket().close();
+                    } catch (IOException e1) {}
                     dispose();
-                    return;
+                }
+                else {
+                    if(userInput.getText().length()==1) {
+                        String txt = userInput.getText().toLowerCase();
+                        int checkInput = (int) txt.charAt(0);
+                        System.out.println(checkInput);
+                        if ((checkInput <= 122 && checkInput >= 97) || checkInput == 48) {
+                            try {
+                                hangmanWindow.this.parent.getBufferedWriter().write(userInput.getText());
+                                hangmanWindow.this.parent.getBufferedWriter().flush();
+                            } catch (IOException e1) {
+                                System.out.println("Server error");
+                                dispose();
+                            }
+                        }
+                        else serverMsgArea.append("Invalid input\n");
+                    }
+                    else serverMsgArea.append("Too long input\n");
                 }
             }
         }
