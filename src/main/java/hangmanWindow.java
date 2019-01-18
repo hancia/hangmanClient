@@ -16,6 +16,8 @@ public class hangmanWindow extends JFrame implements ActionListener, WindowListe
     private JLabel commands;
     private JTextArea commandsArea;
     private connectionHandler parent;
+    private JLabel wordStateLabel;
+    private JTextArea wordStateArea;
     private boolean run;
     public hangmanWindow(connectionHandler parent){
         super("Hangman");
@@ -50,13 +52,22 @@ public class hangmanWindow extends JFrame implements ActionListener, WindowListe
         c.gridy++;
         scoresArea = new JTextArea(3,20);
         scoresArea.setEditable(false);
-        add(scoresArea,c);
+        add(new JScrollPane(scoresArea),c);
 
         commandsArea = new JTextArea(3,20);
         commandsArea.append("0 - Ready to play\n");
         commandsArea.append("1 - Exit");
         commandsArea.setEditable(false);
-        add(commandsArea,c);
+        add(new JScrollPane(commandsArea),c);
+
+        c.gridy++;
+        c.gridwidth = 2;
+        wordStateLabel = new JLabel("Word state: ");
+        add(wordStateLabel,c);
+        c.gridy++;
+        wordStateArea = new JTextArea(3,20);
+        wordStateArea.setEditable(false);
+        add(new JScrollPane(wordStateArea),c);
 
         c.gridy++;
         c.gridwidth=1;
@@ -69,11 +80,11 @@ public class hangmanWindow extends JFrame implements ActionListener, WindowListe
         c.gridy++;
         hangmanArea = new JTextArea(20,20);
         hangmanArea.setEditable(false);
-        add(hangmanArea,c);
+        add(new JScrollPane(hangmanArea),c);
 
         serverMsgArea = new JTextArea(20,20);
         serverMsgArea.setEditable(false);
-        add(serverMsgArea,c);
+        add(new JScrollPane(serverMsgArea),c);
 
         c.gridy++;
         userInput = new JTextField(20);
@@ -86,13 +97,27 @@ public class hangmanWindow extends JFrame implements ActionListener, WindowListe
         Thread readFromServer = new Thread(() -> {
             while(run){
                 try {
-                    ArrayList<String> messages = readFromSocket();
-                    if(messages.size() != 0){
-                        for(String msg : messages)
-                            proccessMessage(msg);
+                    try {
+                        ArrayList<String> messages = readFromSocket();
+                        if(messages.size() != 0){
+                            for(String msg : messages)
+                                proccessMessage(msg);
+                            }
+                        }
+                        catch (NullPointerException a){
+                            cleanAreas();
+                            serverMsgArea.setText("SERVER DOWN");
+//                            System.out.println("Server down");
+//                            dispose();
+                            return;
                         }
                     } catch (IOException e) {
-                    e.printStackTrace();
+                    System.out.println("Ending program");
+                    try {
+                        hangmanWindow.this.parent.getSocket().close();
+                    } catch (IOException e1) {}
+                    dispose();
+                    return;
                 }
             }
         });
@@ -106,20 +131,23 @@ public class hangmanWindow extends JFrame implements ActionListener, WindowListe
         boolean end = false;
         while (!end) {
             text = parent.getBufferedReader().readLine();
-            System.out.println(text);
-            System.out.println("*************************");
             if(text.equals("$")) {
                 end = true;
             }
             else{
-                String splitTxt[] = text.split("$");
-                if(splitTxt.length!=1) {
+                for(int a = 0; a < text.length(); a++){
+                    if('$' == text.charAt(a)){
+                        end = true;
+                    }
+                }
+                if(end) {
+                    String splitTxt[] = text.split("$");
                     for (int i = 0; i < splitTxt.length; i++) {
                         messages.add(splitTxt[i]);
                     }
-                    end = true;
                 }
                 else txt.append(text);
+                //txt.append(text);
             }
         }
         messages.add(txt.toString());
@@ -128,9 +156,10 @@ public class hangmanWindow extends JFrame implements ActionListener, WindowListe
 
     private void proccessMessage(String txt) {
         String window[] = splitFirstWord(txt);
-        System.out.println(txt);
-        System.out.println("*************************************");
         switch (window[0]) {
+            case "New":
+                cleanAreas();
+                break;
             case "Scores":
                 printLines(window[1],scoresArea);
                 break;
@@ -140,18 +169,31 @@ public class hangmanWindow extends JFrame implements ActionListener, WindowListe
             case "Server":
                 printServer(window[1]);
                 break;
+            case "Word":
+                printWord(window[1]);
+                break;
         }
     }
 
+    private void cleanAreas(){
+        hangmanArea.setText("");
+        scoresArea.setText("");
+        wordStateArea.setText("");
+        serverMsgArea.setText("");
+    }
     private void printLines(String txt, JTextArea area){
         area.setText("");
         String lines[] = txt.split("#");
-        System.out.println(lines.length);
         for(int i=0; i<lines.length; i++)
             area.append(lines[i]+"\n");
     }
     private void printServer(String txt){
+        if(serverMsgArea.getLineCount()>5)
+            serverMsgArea.setText("");
         serverMsgArea.append(txt+"\n");
+    }
+    private void printWord(String txt){
+        wordStateArea.setText(txt);
     }
 
     private String[] splitFirstWord(String txt){
@@ -168,7 +210,9 @@ public class hangmanWindow extends JFrame implements ActionListener, WindowListe
                     hangmanWindow.this.parent.getBufferedWriter().write(userInput.getText());
                     hangmanWindow.this.parent.getBufferedWriter().flush();
                 } catch (IOException e1) {
-                    e1.printStackTrace();
+                    System.out.println("Server error");
+                    dispose();
+                    return;
                 }
             }
         }
